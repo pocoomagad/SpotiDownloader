@@ -1,0 +1,29 @@
+services:
+  redis:
+    container_name: redis01
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    command: redis-server
+    volumes:
+      - ./redisdata:/data
+
+  webapp:
+    container_name: app02
+    build: .
+    volumes:
+      - ./shared_downloads:/app/downloads
+    ports:
+      - "8000:8000"
+    depends_on: #пока контейнер с редис не поднимется то и фастапи тоже
+      - redis
+    restart: always
+
+  celery:
+    container_name: celery03
+    build: .
+    volumes:
+      - ./shared_downloads:/app/downloads
+    command: poetry run celery -A src.database.config worker --loglevel=info
+    depends_on: 
+      - redis

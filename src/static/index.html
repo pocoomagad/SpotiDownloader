@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Audio Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status.loading {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #8b4513;
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #2d5016;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #8b1538;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            animation: pulse 2s infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .download-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(17, 153, 142, 0.3);
+        }
+
+        .task-id {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Spotify Downloader</h1>
+        
+        <form id="downloadForm">
+            <div class="form-group">
+                <label for="url">Spotify URL:</label>
+                <input type="url" id="url" required placeholder="https://open.spotify.com/track/...">
+            </div>
+            
+            <div class="form-group">
+                <label for="audioformat">Audio Format:</label>
+                <select id="audioformat" required>
+                    <option value="">Select format</option>
+                    <option value="mp3">MP3</option>
+                    <option value="flac">FLAC</option>
+                    <option value="wav">WAV</option>
+                    <option value="ogg">OGG</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="quality">Quality:</label>
+                <select id="quality" required>
+                    <option value="">Select quality</option>
+                    <option value="320">320 kbps</option>
+                    <option value="256">256 kbps</option>
+                    <option value="192">192 kbps</option>
+                    <option value="128">128 kbps</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="downloadBtn">Start Download</button>
+        </form>
+        
+        <div id="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        
+        class SpotifyDownloader {
+            constructor() {
+                this.form = document.getElementById('downloadForm');
+                this.statusDiv = document.getElementById('status');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.currentTaskId = null;
+                this.pollInterval = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+            }
+            
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const url = document.getElementById('url').value.trim();
+                const audioformat = document.getElementById('audioformat').value;
+                const quality = document.getElementById('quality').value;
+                
+                // Валидация
+                if (!url || !audioformat || !quality) {
+                    this.setStatus('error', '❌ Please fill in all fields');
+                    return;
+                }
+                
+                this.startDownload(url, audioformat, quality);
+            }
+            
+            async startDownload(url, audioformat, quality) {
+                try {
+                    this.setStatus('loading', '🚀 Starting download...');
+                    this.downloadBtn.disabled = true;
+                    
+                    const params = new URLSearchParams({
+                        url,
+                        audioformat,
+                        quality
+                    });
+                    
+                    const response = await fetch(`${API_BASE}/spotify/audio?${params}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.currentTaskId = data.task_id;
+                    
+                    this.setStatus('loading', `📋 Task created: ${this.currentTaskId}`, this.currentTaskId);
+                    this.startPolling();
+                    
+                } catch (error) {
+                    this.setStatus('error', `❌ Error: ${error.message}`);
+                    this.downloadBtn.disabled = false;
+                }
+            }
+            
+            startPolling() {
+                this.pollInterval = setInterval(() => {
+                    this.checkTaskStatus();
+                }, 2000);
+            }
+            
+            async checkTaskStatus() {
+                try {
+                    const response = await fetch(`${API_BASE}/tasks/${encodeURIComponent(this.currentTaskId)}`);
+                    
+                    if (response.headers.get('content-type')?.includes('application/octet-stream')) {
+                        // Файл готов для скачивания
+                        this.handleDownloadReady(response);
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        this.setStatus('success', '✅ Download completed!');
+                        this.stopPolling();
+                        this.downloadBtn.disabled = false;
+                    } else if (data.status === 'failed') {
+                        this.setStatus('error', `❌ Download failed: ${data.error || 'Unknown error'}`);
+                        this.stopPolling();
+                        this.downloadBtn.disabled = false;
+                    } else if (data.status === 'pending') {
+                        this.setStatus('loading', '⏳ Task is pending...');
+                    } else if (data.status === 'processing') {
+                        this.setStatus('loading', '⚙️ Processing your request...');
+                    } else {
+                        this.setStatus('loading', `📊 Status: ${data.status}`);
+                    }
+                    
+                } catch (error) {
+                    this.setStatus('error', `❌ Error checking status: ${error.message}`);
+                    this.stopPolling();
+                    this.downloadBtn.disabled = false;
+                }
+            }
+            
+            async handleDownloadReady(response) {
+                try {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    
+                    this.setStatus('success', '🎉 Download ready!', null, url);
+                    this.stopPolling();
+                    this.downloadBtn.disabled = false;
+                    
+                } catch (error) {
+                    this.setStatus('error', `❌ Error preparing download: ${error.message}`);
+                    this.stopPolling();
+                    this.downloadBtn.disabled = false;
+                }
+            }
+            
+            setStatus(type, message, taskId = null, downloadUrl = null, response = null) {
+                this.statusDiv.style.display = 'block';
+                this.statusDiv.className = `status ${type}`;
+                
+                let content = `<div>${message}</div>`;
+                
+                if (type === 'loading') {
+                    content += `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    `;
+                }
+                
+                if (taskId) {
+                    content += `<div class="task-id">Task ID: ${taskId}</div>`;
+                }
+                
+                if (downloadUrl) {
+                    // Определяем расширение файла на основе content-type или формата
+                    const contentType = response?.headers.get('content-type');
+                    let filename = `spotify_audio_${Date.now()}.zip`;
+                    
+                    content += `<a href="${downloadUrl}" download="${filename}" class="download-link">📥 Download File</a>`;
+                }
+                
+                this.statusDiv.innerHTML = content;
+            }
+            
+            stopPolling() {
+                if (this.pollInterval) {
+                    clearInterval(this.pollInterval);
+                    this.pollInterval = null;
+                }
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            new SpotifyDownloader();
+        });
+    </script>
+</body>
+</html>
