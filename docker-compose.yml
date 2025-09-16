@@ -21,7 +21,6 @@ services:
 
   celery:
     container_name: celery03
-    build: .
     volumes:
       - ./shared_downloads:/app/downloads
     command: poetry run celery -A src.database.config worker --loglevel=info
