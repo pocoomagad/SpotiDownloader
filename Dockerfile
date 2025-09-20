@@ -5,7 +5,6 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     POETRY_NO_INTERACTION=1 \ 
-    POETRY_VENV_IN_PROJECT=1 \
     POETRY_CACHE_DIR=/tmp/poetry_cache 
 
 RUN apk add --no-cache \
@@ -19,7 +18,10 @@ RUN apk add --no-cache \
     # POETRY_VENV_IN_PROJECT=1 - создает .venv в директории проекта
     # POETRY_CACHE_DIR=/tmp/poetry_cache - кеш в временной директори
 
+RUN poetry config virtualenvs.create false
+
 RUN mkdir -p /app/downloads && chmod 777 /app/downloads
+
 
 COPY pyproject.toml poetry.lock* ./
 
@@ -35,4 +37,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD [ "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000" ]

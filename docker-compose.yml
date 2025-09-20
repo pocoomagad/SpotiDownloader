@@ -21,8 +21,10 @@ services:
 
   celery:
     container_name: celery03
+    image: celery:latest
+    build: .
     volumes:
       - ./shared_downloads:/app/downloads
-    command: poetry run celery -A src.database.config worker --loglevel=info
+    command: celery -A src.database.config worker --loglevel=info
     depends_on: 
       - redis
